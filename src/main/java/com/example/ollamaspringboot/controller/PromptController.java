@@ -5,6 +5,7 @@ import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.PostMapping;
+import com.example.ollamaspringboot.dto.PromptRequest;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -31,7 +32,7 @@ public class PromptController {
     private String groqApiKey;
 
     @PostMapping("/prompt")
-    public Map<String, String> prompt(@RequestBody String prompt) {
+    public Map<String, String> prompt(@RequestBody PromptRequest promptRequest) {
         if (groqApiKey == null || groqApiKey.equals("YOUR_GROQ_API_KEY_HERE") || groqApiKey.isEmpty()) {
             Map<String, String> errorResponse = new HashMap<>();
             errorResponse.put("error", "Groq API key is not configured. Please set 'groq.api.key' in application.properties.");
@@ -47,10 +48,11 @@ public class PromptController {
         // Create the request body for Groq Chat Completions API
         Map<String, Object> message = new HashMap<>();
         message.put("role", "user");
-        message.put("content", prompt);
+        message.put("content", promptRequest.getPrompt());
 
         Map<String, Object> requestBody = new HashMap<>();
-        requestBody.put("model", groqModel);
+        String modelToUse = promptRequest.getModel() != null ? promptRequest.getModel() : groqModel;
+        requestBody.put("model", modelToUse);
         requestBody.put("messages", Collections.singletonList(message));
 
         // Create the request entity
