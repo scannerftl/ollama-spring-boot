@@ -1,5 +1,6 @@
 package com.example.ollamaspringboot.controller;
 
+import com.example.ollamaspringboot.dto.ConversationMessageDTO;
 import com.example.ollamaspringboot.dto.DiscussionDTO;
 import com.example.ollamaspringboot.service.DiscussionService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -39,5 +40,20 @@ public class DiscussionController {
         
         discussionService.deleteDiscussion(discussionId, userId);
         return ResponseEntity.ok().build();
+    }
+    
+    /**
+     * Récupère les messages d'une discussion
+     * @param discussionId ID de la discussion
+     * @param userId ID de l'utilisateur (pour vérification d'autorisation)
+     * @return Liste des messages de la discussion
+     */
+    @GetMapping("/{discussionId}/messages")
+    public ResponseEntity<List<ConversationMessageDTO>> getDiscussionMessages(
+            @PathVariable String discussionId,
+            @RequestParam String userId) {
+        
+        List<ConversationMessageDTO> messages = discussionService.getDiscussionMessages(discussionId, userId);
+        return ResponseEntity.ok(messages);
     }
 }

@@ -1,6 +1,8 @@
 package com.example.ollamaspringboot.service;
 
+import com.example.ollamaspringboot.dto.ConversationMessageDTO;
 import com.example.ollamaspringboot.dto.DiscussionDTO;
+import com.example.ollamaspringboot.model.ConversationMessage;
 import com.example.ollamaspringboot.model.Discussion;
 import com.example.ollamaspringboot.repository.ConversationMessageRepository;
 import com.example.ollamaspringboot.repository.DiscussionRepository;
@@ -21,6 +23,7 @@ public class DiscussionService {
     
     @Autowired
     private ConversationMessageRepository messageRepository;
+    
 
     @Transactional(readOnly = true)
     public List<DiscussionDTO> getUserDiscussions(String userId) {
@@ -52,6 +55,36 @@ public class DiscussionService {
         int messageCount = messageRepository.countByDiscussionId(discussion.getId());
         dto.setMessageCount(messageCount);
         
+        return dto;
+    }
+    
+    /**
+     * Récupère les messages d'une discussion
+     * @param discussionId ID de la discussion
+     * @param userId ID de l'utilisateur (pour vérification d'autorisation)
+     * @return Liste des messages de la discussion
+     */
+    @Transactional(readOnly = true)
+    public List<ConversationMessageDTO> getDiscussionMessages(String discussionId, String userId) {
+        // Vérifier que la discussion existe et appartient à l'utilisateur
+        Discussion discussion = discussionRepository.findByDiscussionId(discussionId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Discussion non trouvée"));
+                
+        if (!discussion.getUserId().equals(userId)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Non autorisé à accéder à cette discussion");
+        }
+        
+        return messageRepository.findByDiscussion_DiscussionIdOrderByTimestampAsc(discussionId).stream()
+                .map(this::convertToMessageDTO)
+                .collect(Collectors.toList());
+    }
+    
+    private ConversationMessageDTO convertToMessageDTO(ConversationMessage message) {
+        ConversationMessageDTO dto = new ConversationMessageDTO();
+        dto.setId(message.getId());
+        dto.setRole(message.getRole());
+        dto.setContent(message.getContent());
+        dto.setTimestamp(message.getTimestamp());
         return dto;
     }
 }
