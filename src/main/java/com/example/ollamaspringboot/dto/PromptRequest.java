@@ -4,6 +4,7 @@ public class PromptRequest {
     private String prompt;
     private String model;
     private String userId;
+    private String discussionId;
 
     // Getters and Setters
     public String getPrompt() {
@@ -28,5 +29,13 @@ public class PromptRequest {
 
     public void setUserId(String userId) {
         this.userId = userId;
+    }
+
+    public String getDiscussionId() {
+        return discussionId;
+    }
+
+    public void setDiscussionId(String discussionId) {
+        this.discussionId = discussionId;
     }
 }

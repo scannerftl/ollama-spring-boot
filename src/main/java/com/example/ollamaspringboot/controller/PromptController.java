@@ -17,6 +17,7 @@ import org.springframework.web.client.RestTemplate;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api")
@@ -37,9 +38,9 @@ public class PromptController {
     private String groqApiKey;
 
     @PostMapping("/prompt")
-    public Map<String, String> prompt(@RequestBody PromptRequest promptRequest) {
+    public Map<String, Object> prompt(@RequestBody PromptRequest promptRequest) {
         if (groqApiKey == null || groqApiKey.equals("YOUR_GROQ_API_KEY_HERE") || groqApiKey.isEmpty()) {
-            Map<String, String> errorResponse = new HashMap<>();
+            Map<String, Object> errorResponse = new HashMap<>();
             errorResponse.put("error", "Groq API key is not configured. Please set 'groq.api.key' in application.properties.");
             return errorResponse;
         }
@@ -51,15 +52,21 @@ public class PromptController {
         headers.set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36");
 
         // Create the request body for Groq Chat Completions API
-        // Get conversation history
-        List<Map<String, Object>> messages = conversationService.getHistory(promptRequest.getUserId());
+        // Get or create discussion ID
+        String discussionId = promptRequest.getDiscussionId();
+        if (discussionId == null || discussionId.trim().isEmpty()) {
+            discussionId = UUID.randomUUID().toString();
+        }
+
+        // Get conversation history using discussionId
+        List<Map<String, Object>> messages = conversationService.getHistory(discussionId);
 
         // Add the new user message to the history
         Map<String, Object> userMessage = new HashMap<>();
         userMessage.put("role", "user");
         userMessage.put("content", promptRequest.getPrompt());
         messages.add(userMessage);
-        conversationService.addMessage(promptRequest.getUserId(), userMessage);
+        conversationService.addMessage(promptRequest.getUserId(), discussionId, userMessage);
 
         Map<String, Object> requestBody = new HashMap<>();
         String modelToUse = promptRequest.getModel() != null ? promptRequest.getModel() : groqModel;
@@ -93,7 +100,7 @@ public class PromptController {
                                 Map<String, Object> assistantMessage = new HashMap<>();
                                 assistantMessage.put("role", "assistant");
                                 assistantMessage.put("content", responseText);
-                                conversationService.addMessage(promptRequest.getUserId(), assistantMessage);
+                                conversationService.addMessage(promptRequest.getUserId(), discussionId, assistantMessage);
                             } else if (contentObj != null) {
                                 System.err.println("Warning: Groq API response 'content' was not a String. Found: " + contentObj.getClass().getName());
                             }
@@ -106,8 +113,9 @@ public class PromptController {
         }
 
         // Return the response
-        Map<String, String> response = new HashMap<>();
+        Map<String, Object> response = new HashMap<>();
         response.put("response", responseText);
+        response.put("discussionId", discussionId);
         return response;
     }
 }

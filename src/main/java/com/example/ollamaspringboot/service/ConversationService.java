@@ -17,8 +17,8 @@ public class ConversationService {
     @Autowired
     private ConversationMessageRepository repository;
 
-    public List<Map<String, Object>> getHistory(String userId) {
-        return repository.findByUserIdOrderByTimestampAsc(userId).stream()
+    public List<Map<String, Object>> getHistory(String discussionId) {
+        return repository.findByDiscussionIdOrderByTimestampAsc(discussionId).stream()
                 .map(msg -> {
                     Map<String, Object> map = new HashMap<>();
                     map.put("role", msg.getRole());
@@ -28,9 +28,10 @@ public class ConversationService {
                 .collect(Collectors.toList());
     }
 
-    public void addMessage(String userId, Map<String, Object> message) {
+    public void addMessage(String userId, String discussionId, Map<String, Object> message) {
         ConversationMessage conversationMessage = new ConversationMessage();
         conversationMessage.setUserId(userId);
+        conversationMessage.setDiscussionId(discussionId);
         conversationMessage.setRole((String) message.get("role"));
         conversationMessage.setContent((String) message.get("content"));
         repository.save(conversationMessage);

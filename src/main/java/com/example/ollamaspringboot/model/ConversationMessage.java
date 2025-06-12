@@ -11,6 +11,7 @@ public class ConversationMessage {
     private Long id;
 
     private String userId;
+    private String discussionId;
     private String role;
     @Column(columnDefinition = "TEXT")
     private String content;
@@ -31,6 +32,14 @@ public class ConversationMessage {
 
     public void setUserId(String userId) {
         this.userId = userId;
+    }
+
+    public String getDiscussionId() {
+        return discussionId;
+    }
+
+    public void setDiscussionId(String discussionId) {
+        this.discussionId = discussionId;
     }
 
     public String getRole() {
