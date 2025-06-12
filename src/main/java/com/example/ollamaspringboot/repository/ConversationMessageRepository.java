@@ -12,4 +12,7 @@ import java.util.List;
 public interface ConversationMessageRepository extends JpaRepository<ConversationMessage, Long> {
     @Query("SELECT m FROM ConversationMessage m JOIN m.discussion d WHERE d.discussionId = :discussionId ORDER BY m.timestamp ASC")
     List<ConversationMessage> findByDiscussion_DiscussionIdOrderByTimestampAsc(@Param("discussionId") String discussionId);
+    
+    @Query("SELECT COUNT(m) FROM ConversationMessage m WHERE m.discussion.id = :discussionId")
+    int countByDiscussionId(@Param("discussionId") Long discussionId);
 }
