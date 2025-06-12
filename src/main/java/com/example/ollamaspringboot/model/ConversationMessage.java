@@ -11,7 +11,10 @@ public class ConversationMessage {
     private Long id;
 
     private String userId;
-    private String discussionId;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "discussion_id")
+    private Discussion discussion;
     private String role;
     @Column(columnDefinition = "TEXT")
     private String content;
@@ -34,12 +37,12 @@ public class ConversationMessage {
         this.userId = userId;
     }
 
-    public String getDiscussionId() {
-        return discussionId;
+    public Discussion getDiscussion() {
+        return discussion;
     }
 
-    public void setDiscussionId(String discussionId) {
-        this.discussionId = discussionId;
+    public void setDiscussion(Discussion discussion) {
+        this.discussion = discussion;
     }
 
     public String getRole() {

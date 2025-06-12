@@ -112,10 +112,14 @@ public class PromptController {
             }
         }
 
+        // Get discussion name
+        String discussionName = conversationService.getDiscussionName(discussionId);
+        
         // Return the response
         Map<String, Object> response = new HashMap<>();
         response.put("response", responseText);
         response.put("discussionId", discussionId);
+        response.put("discussionName", discussionName);
         return response;
     }
 }
