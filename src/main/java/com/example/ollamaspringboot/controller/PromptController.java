@@ -8,10 +8,12 @@ import org.springframework.web.bind.annotation.PostMapping;
 import com.example.ollamaspringboot.dto.PromptRequest;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import com.example.ollamaspringboot.service.ConversationService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.RestTemplate;
 
-import java.util.Collections;
+
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -21,6 +23,9 @@ import java.util.Map;
 public class PromptController {
 
     private final RestTemplate restTemplate = new RestTemplate();
+
+    @Autowired
+    private ConversationService conversationService;
 
     @Value("${groq.api.url}")
     private String groqApiUrl;
@@ -46,14 +51,20 @@ public class PromptController {
         headers.set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36");
 
         // Create the request body for Groq Chat Completions API
-        Map<String, Object> message = new HashMap<>();
-        message.put("role", "user");
-        message.put("content", promptRequest.getPrompt());
+        // Get conversation history
+        List<Map<String, Object>> messages = conversationService.getHistory(promptRequest.getUserId());
+
+        // Add the new user message to the history
+        Map<String, Object> userMessage = new HashMap<>();
+        userMessage.put("role", "user");
+        userMessage.put("content", promptRequest.getPrompt());
+        messages.add(userMessage);
+        conversationService.addMessage(promptRequest.getUserId(), userMessage);
 
         Map<String, Object> requestBody = new HashMap<>();
         String modelToUse = promptRequest.getModel() != null ? promptRequest.getModel() : groqModel;
         requestBody.put("model", modelToUse);
-        requestBody.put("messages", Collections.singletonList(message));
+        requestBody.put("messages", messages);
 
         // Create the request entity
         HttpEntity<Map<String, Object>> requestEntity = new HttpEntity<>(requestBody, headers);
@@ -78,6 +89,11 @@ public class PromptController {
                             Object contentObj = responseMessage.get("content");
                             if (contentObj instanceof String) {
                                 responseText = (String) contentObj;
+                                // Save assistant's response to history
+                                Map<String, Object> assistantMessage = new HashMap<>();
+                                assistantMessage.put("role", "assistant");
+                                assistantMessage.put("content", responseText);
+                                conversationService.addMessage(promptRequest.getUserId(), assistantMessage);
                             } else if (contentObj != null) {
                                 System.err.println("Warning: Groq API response 'content' was not a String. Found: " + contentObj.getClass().getName());
                             }
